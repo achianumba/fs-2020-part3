@@ -1,70 +1,115 @@
-const express = require('express');
-const morgan = require('morgan');
-const cors = require('cors');
-let persons = require('./persons');
-
+require("dotenv").config();
+const express = require("express");
+const morgan = require("morgan");
+const cors = require("cors");
+const {
+  getPersons,
+  addPerson,
+  deletePerson,
+  getPersonById,
+  updatePerson,
+} = require("./models/person");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.static('build'));
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+app.use(express.static("build"));
 app.use(cors());
 
 //create a token to display the body of post requests
-morgan.token('body', (req) => req.method !== 'POST' ? '' : JSON.stringify(req.body));
+morgan.token("body", (req) =>
+  req.method !== "POST" ? "" : JSON.stringify(req.body)
+);
 
-app.use(morgan(`:method :url :status :res[content-length] - :response-time ms :body`))
-
-app.get('/info', (req, res) => {
-    res.send(
-        `<p>Phonebook has ${ persons.length } people</p>
-        <p>${ new Date() }</p>
-        `
-    )
+app.use(
+  morgan(`:method :url :status :res[content-length] - :response-time ms :body`)
+);
+//get people
+app.get("/info", (req, res) => {
+  getPersons()
+    .then((persons) => {
+      res.send(
+        `<p>Phonebook has ${
+          persons === null || persons.length === 0 ? 0 : persons.length
+        } people</p>
+            <p>${new Date()}</p>
+            `
+      );
+    })
+    .catch((err) => next(err));
 });
 
-app.get('/api/persons', (req, res) => {
-    res.json(persons)
+app.get("/api/persons", (req, res, next) => {
+  getPersons()
+    .then((phonebook) => {
+      if (phonebook === undefined)
+        return res.json({ message: "Phonebook is empty" });
+
+      res.json(phonebook.map((person) => person.toJSON()));
+    })
+    .catch((error) => next(error));
+});
+//get person
+app.get("/api/persons/:id", (req, res, next) => {
+  getPersonById(req.params.id)
+    .then((person) => {
+      if (person === null)
+        return res.status(404).json({ error: "Person not found " });
+
+      res.json(person.toJSON());
+    })
+    .catch((err) => next(err));
 });
 
-app.get('/api/persons/:id', (req, res) => {
-    let person = persons.find(({ id }) => id === Number(req.params.id));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+//add person
+app.post("/api/persons/", (req, res, next) => {
+    addPerson(req.body)
+      .then((savedPerson) => {
+        console.log(savedPerson.toJSON());
+        res.json(savedPerson.toJSON());
+      })
+      .catch(err => {
+          next(err);
+      });
+});
 
-    if (person) {
-        res.json(person);
+//update person
+app.put("/api/persons/:id", (req, res, next) => {
+  getPersonById(req.params.id)
+    .then((person) => {
+      if (person === null) return res.status(404).json({ error: "Not found" });
+      console.log(req.params.id, req.body);
+      updatePerson(req.params.id, req.body)
+        .then((updated) => res.json(updated))
+        .catch((err) => next(err));
+    })
+    .catch((err) => next(err));
+});
+//delete person
+app.delete("/api/persons/:id", (req, res, next) => {
+  deletePerson(req.params.id)
+    .then(() => {
+      res.status(200).json(req.params.id);
+    })
+    .catch((err) => next(err));
+});
+//unknown routes
+app.use((req, res, next) => {
+    res.status(404).send({ error: "URL not found" });
+    next();
+  });
+//error handler
+app.use((err, req, res, next) => {
+  console.error('\n', err.message, '\n');
+
+    if (
+        (err.name === 'ValidationError') ||
+        (err.name === 'CastError')
+        ) {
+        res.status(400).json({ error: err.message });
     } else {
-        res.status(404).send('<h2>The requested contact does not exist in Phonebook</h2>')
-    }
-});
-
-app.delete('/api/persons/:id', (req, res) => {
-    let person = persons.some(({ id }) => id === Number(req.params.id));
-    
-    if (person) {
-        persons = persons.filter(({ id }) => id !== Number(req.params.id))
-        res.status(204).end();
-    } else {
-        res.status(404).send('<h2>The contact you are trying to delete does not exist in Phonebook</h2>')
-    }
-});
-
-app.post('/api/persons/', (req, res) => {
-    let { name, number } = req.body;
-    console.log(persons.find((person) => person.name === name), persons)
-
-    if (!name || !number) {
-        return res.status(400).json({ error: 'Please fill out the name and number fields before saving.'})
-    } else if (persons.some((person) => person.name === name)) {
-        return res.status(400).json({ error: 'A contact with that name already exists' });
-    } else {
-        let person = {
-            ...req.body,
-            id: Math.round(Math.random() * 10000)
-        }
-        persons = persons.concat(person);
-        console.log(person)
-        return res.json(person);
+        res.status(403).json({ error: error.message })
     }
 });
 
