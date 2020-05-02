@@ -1,4 +1,4 @@
-// if (process.env.NODE_ENV !== 'production') require("dotenv").config();
+if (process.env.NODE_ENV !== "production") require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
@@ -9,6 +9,7 @@ const {
   getPersonById,
   updatePerson,
 } = require("./models/person");
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -24,7 +25,7 @@ app.use(
   morgan(`:method :url :status :res[content-length] - :response-time ms :body`)
 );
 //get people
-app.get("/info", (req, res) => {
+app.get("/info", (req, res, next) => {
   getPersons()
     .then((persons) => {
       res.send(
@@ -46,7 +47,7 @@ app.get("/api/persons", (req, res, next) => {
 
       res.json(phonebook.map((person) => person.toJSON()));
     })
-    .catch((error) => next(error));
+    .catch((err) => next(err));
 });
 //get person
 app.get("/api/persons/:id", (req, res, next) => {
@@ -64,14 +65,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 //add person
 app.post("/api/persons/", (req, res, next) => {
-    addPerson(req.body)
-      .then((savedPerson) => {
-        console.log(savedPerson.toJSON());
-        res.json(savedPerson.toJSON());
-      })
-      .catch(err => {
-          next(err);
-      });
+  addPerson(req.body)
+    .then((savedPerson) => {
+      res.json(savedPerson.toJSON());
+    })
+    .catch((err) => next(err));
 });
 
 //update person
@@ -96,21 +94,19 @@ app.delete("/api/persons/:id", (req, res, next) => {
 });
 //unknown routes
 app.use((req, res, next) => {
-    res.status(404).send({ error: "URL not found" });
-    next();
-  });
+  res.status(404).send({ error: "URL not found" });
+  next();
+});
 //error handler
 app.use((err, req, res, next) => {
-  console.error('\n', err.message, '\n');
+  console.error("\n", err.message, "\n");
 
-    if (
-        (err.name === 'ValidationError') ||
-        (err.name === 'CastError')
-        ) {
-        res.status(400).json({ error: err.message });
-    } else {
-        res.status(403).json({ error: error.message })
-    }
+  if ((err.name === 'ValidationError') || (err.name === 'CastError')) {
+    res.status(400).json({ error: err.message });
+  } else {
+    res.status(403).json({ error: err.message })
+  }
+  next()
 });
 
 app.listen(PORT, console.log(`Server running at ${PORT}`));
