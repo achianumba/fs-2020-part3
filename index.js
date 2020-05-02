@@ -1,5 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 let persons = require('./persons');
 
 const app = express();
@@ -7,6 +8,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(cors());
 
 //create a token to display the body of post requests
 morgan.token('body', (req) => req.method !== 'POST' ? '' : JSON.stringify(req.body));
@@ -48,18 +50,20 @@ app.delete('/api/persons/:id', (req, res) => {
 
 app.post('/api/persons/', (req, res) => {
     let { name, number } = req.body;
+    console.log(persons.find((person) => person.name === name), persons)
 
     if (!name || !number) {
-        res.status(400).json({ error: 'Please fill out the name and number fields before saving.'})
+        return res.status(400).json({ error: 'Please fill out the name and number fields before saving.'})
     } else if (persons.some((person) => person.name === name)) {
-        res.status(400).json({ error: 'A contact with that name already exists' });
+        return res.status(400).json({ error: 'A contact with that name already exists' });
     } else {
-        persons = persons.concat({
+        let person = {
             ...req.body,
             id: Math.round(Math.random() * 10000)
-        });
-        res.send('<h2>Saved successfully!</h1>');
+        }
+        persons = persons.concat(person);
+        return res.json(person);
     }
 });
 
-app.listen(PORT, console.log('Server running...'));
+app.listen(PORT, console.log(`Server running at ${PORT}`));
