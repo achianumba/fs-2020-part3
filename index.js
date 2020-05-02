@@ -63,6 +63,7 @@ app.post('/api/persons/', (req, res) => {
             id: Math.round(Math.random() * 10000)
         }
         persons = persons.concat(person);
+        console.log(person)
         return res.json(person);
     }
 });
