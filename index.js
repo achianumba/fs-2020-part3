@@ -6,6 +6,7 @@ let persons = require('./persons');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.use(express.static('build'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
