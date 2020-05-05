@@ -1,10 +1,14 @@
-const { connect, Schema, model, set } = require("mongoose");
+const { connect, Schema, model, connection, set } = require("mongoose");
 const mongooseUniqueValidator = require("mongoose-unique-validator");
 
-connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const connectToDb = () => {
+  return connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+    .then(() => console.log("Connected to MongoDB successfully"))
+    .catch((err) => console.error("FAILED TO CONNECTED TO MONGODB", err.message));
+};
 
 const personSchema = new Schema({
   name: { type: String, required: true, unique: true, minlength: 3 },
@@ -29,15 +33,34 @@ set(`useCreateIndex`, true);
 const Person = model("Person", personSchema);
 
 //fetch all persons
-module.exports.getPersons = () => Person.find();
+module.exports.getPersons = () => {
+  connectToDb();
+  return Person.find();
+}
 //find One person
-module.exports.getPerson = (personName) => Person.findOne({ name: personName });
+module.exports.getPerson = (personName) => {
+  connectToDb();
+  return Person.findOne({ name: personName });
+}
 //get by id
-module.exports.getPersonById = (id) => Person.findById(id);
+module.exports.getPersonById = (id) => {
+  connectToDb();
+  return Person.findById(id);
+}
 //create new person from controller
-module.exports.addPerson = (personObject) => new Person(personObject).save();
+module.exports.addPerson = (personObject) => {
+  connectToDb();
+  return new Person(personObject).save();
+}
 //update person
-module.exports.updatePerson = (id, newNumber) =>
-  Person.findByIdAndUpdate(id, newNumber, { new: true });
+module.exports.updatePerson = (id, newNumber) => {
+  connectToDb();
+  return Person.findByIdAndUpdate(id, newNumber, { new: true });
+}
 //remove a person
-module.exports.deletePerson = (id) => Person.findByIdAndRemove(id);
+module.exports.deletePerson = (id) => {
+  connectToDb();
+  return Person.findByIdAndRemove(id);
+}
+//close db
+module.exports.closeDb = () => connection.close(() => console.log('Terminated MongoDD connection successfully'));
