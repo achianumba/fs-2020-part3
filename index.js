@@ -8,7 +8,6 @@ const {
   deletePerson,
   getPersonById,
   updatePerson,
-  closeDb
 } = require("./models/person");
 
 const app = express();
@@ -37,8 +36,7 @@ app.get("/info", (req, res, next) => {
             `
       );
     })
-    .catch((err) => next(err))
-    .finally(closeDb);
+    .catch((err) => next(err));
 });
 
 app.get("/api/persons", (req, res, next) => {
@@ -49,8 +47,7 @@ app.get("/api/persons", (req, res, next) => {
 
       res.json(phonebook.map((person) => person.toJSON()));
     })
-    .catch((err) => next(err))
-    .finally(closeDb);
+    .catch((err) => next(err));
 });
 //get person
 app.get("/api/persons/:id", (req, res, next) => {
@@ -61,8 +58,7 @@ app.get("/api/persons/:id", (req, res, next) => {
 
       res.json(person.toJSON());
     })
-    .catch((err) => next(err))
-    .finally(closeDb);
+    .catch((err) => next(err));
 });
 
 app.use(express.urlencoded({ extended: false }));
@@ -73,8 +69,7 @@ app.post("/api/persons/", (req, res, next) => {
     .then((savedPerson) => {
       res.json(savedPerson.toJSON());
     })
-    .catch((err) => next(err))
-    .finally(closeDb);
+    .catch((err) => next(err));
 });
 
 //update person
@@ -87,8 +82,7 @@ app.put("/api/persons/:id", (req, res, next) => {
         .then((updated) => res.json(updated))
         .catch((err) => next(err));
     })
-    .catch((err) => next(err))
-    .finally(closeDb);
+    .catch((err) => next(err));
 });
 //delete person
 app.delete("/api/persons/:id", (req, res, next) => {
@@ -96,8 +90,7 @@ app.delete("/api/persons/:id", (req, res, next) => {
     .then(() => {
       res.status(200).json(req.params.id);
     })
-    .catch((err) => next(err))
-    .finally(closeDb);
+    .catch((err) => next(err));
 });
 //unknown routes
 app.use((req, res, next) => {
@@ -108,12 +101,12 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   console.error("\n", err.message, "\n");
 
-  if ((err.name === 'ValidationError') || (err.name === 'CastError')) {
+  if (err.name === "ValidationError" || err.name === "CastError") {
     res.status(400).json({ error: err.message });
   } else {
-    res.status(403).json({ error: err.message })
+    res.status(403).json({ error: err.message });
   }
-  next()
+  next();
 });
 
 app.listen(PORT, console.log(`Server running at ${PORT}`));
