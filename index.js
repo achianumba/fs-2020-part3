@@ -8,6 +8,7 @@ const {
   deletePerson,
   getPersonById,
   updatePerson,
+  connectToDb,
 } = require("./models/person");
 
 const app = express();
@@ -109,4 +110,5 @@ app.use((err, req, res, next) => {
   next();
 });
 
+connectToDb();
 app.listen(PORT, console.log(`Server running at ${PORT}`));
