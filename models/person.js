@@ -1,4 +1,4 @@
-const { connect, Schema, model, connection, set } = require("mongoose");
+const { connect, Schema, model, set } = require("mongoose");
 const mongooseUniqueValidator = require("mongoose-unique-validator");
 
 const connectToDb = () => {
@@ -7,7 +7,9 @@ const connectToDb = () => {
     useUnifiedTopology: true,
   })
     .then(() => console.log("Connected to MongoDB successfully"))
-    .catch((err) => console.error("FAILED TO CONNECTED TO MONGODB", err.message));
+    .catch((err) =>
+      console.error("FAILED TO CONNECTED TO MONGODB", err.message)
+    );
 };
 
 const personSchema = new Schema({
@@ -33,34 +35,36 @@ set(`useCreateIndex`, true);
 const Person = model("Person", personSchema);
 
 //fetch all persons
-module.exports.getPersons = () => {
-  connectToDb();
+const getPersons = () => {
   return Person.find();
-}
+};
 //find One person
-module.exports.getPerson = (personName) => {
-  connectToDb();
+const getPerson = (personName) => {
   return Person.findOne({ name: personName });
-}
+};
 //get by id
-module.exports.getPersonById = (id) => {
-  connectToDb();
+const getPersonById = (id) => {
   return Person.findById(id);
-}
+};
 //create new person from controller
-module.exports.addPerson = (personObject) => {
-  connectToDb();
+const addPerson = (personObject) => {
   return new Person(personObject).save();
-}
+};
 //update person
-module.exports.updatePerson = (id, newNumber) => {
-  connectToDb();
+const updatePerson = (id, newNumber) => {
   return Person.findByIdAndUpdate(id, newNumber, { new: true });
-}
+};
 //remove a person
-module.exports.deletePerson = (id) => {
-  connectToDb();
+const deletePerson = (id) => {
   return Person.findByIdAndRemove(id);
-}
-//close db
-module.exports.closeDb = () => connection.close(() => console.log('Terminated MongoDD connection successfully'));
+};
+
+module.exports = {
+  getPersons,
+  addPerson,
+  deletePerson,
+  getPersonById,
+  updatePerson,
+  connectToDb,
+  getPerson,
+};
